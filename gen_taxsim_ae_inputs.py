@@ -149,15 +149,15 @@ def process_cps_dataset():
     return 0
 
 # %%
-def make_taxsim_inputs_v3(AE=1.0, AE_cut=1.0):
+def make_taxsim_inputs_v3(AE=1.0, AE_cut=1.0, cpsyear=2010):
     df_ebs = pd.read_csv("earnings_by_state/earnings_by_state.csv")
     df_awi = pd.read_csv("awi.csv")
-    df_cps2010 = pd.read_csv("CPS2010.csv")
-    df_cps2010['hhwages'] = df_cps2010['pwages'] + df_cps2010['swages']
-    m_hh_cps = df_cps2010['hhwages'].mean()
-    m_pe_cps = df_cps2010['pwages'].mean()
-    ae_bea_2010 = df_ebs[  (df_ebs['Year'] == 2010) & (df_ebs['IRS'] == 0) ]['per capita income'].iloc[0]
-    ae_ss_2010 = df_awi.loc[ df_awi['year'] == 2010, 'awi' ].iloc[0]
+    df_cps = pd.read_csv(f"CPS{year}.csv")
+    df_cps['hhwages'] = df_cps['pwages'] + df_cps['swages']
+    m_hh_cps = df_cps['hhwages'].mean()
+    m_pe_cps = df_cps['pwages'].mean()
+    ae_bea_cpsyear = df_ebs[  (df_ebs['Year'] == cpsyear) & (df_ebs['IRS'] == 0) ]['per capita income'].iloc[0]
+    ae_ss_cpsyear = df_awi.loc[ df_awi['year'] == cpsyear, 'awi' ].iloc[0]
     #print("Mean earnings: ")
     #print(f" CPS(hhwages): {m_hh_cps}")
     #print(f" CPS(phwages): {m_pe_cps}")
@@ -170,31 +170,31 @@ def make_taxsim_inputs_v3(AE=1.0, AE_cut=1.0):
     # years = list(range(2000, 2001))
     make_hist = False
     for state in state_codes:
-        ae_bea_2010_state = df_ebs[ (df_ebs['IRS'] == state) & (df_ebs['Year'] == 2010) ]['per capita income'].iloc[0]
+        ae_bea_cpsyear_state = df_ebs[ (df_ebs['IRS'] == state) & (df_ebs['Year'] == cpsyear ) ]['per capita income'].iloc[0]
         for year in years:
             print(year)
-            df_cps2010 = pd.read_csv("CPS2010.csv")
+            df_cps = pd.read_csv(f"CPS{cpsyear}.csv")
             ae_ss_year = df_awi.loc[ df_awi['year'] == year, 'awi' ].iloc[0]
             #adj_state = ae_bea_2010_state/ae_bea_2010
             adj_state = 1.0
-            adj_year = ae_ss_year/ae_ss_2010
+            adj_year = ae_ss_year/ae_ss_cpsyear
             adj_factor = adj_state*adj_year
-            df_cps2010['hhwages'] = df_cps2010['pwages'] + df_cps2010['swages']
-            df_cps2010['pwages'] = df_cps2010['pwages']*adj_factor
-            df_cps2010['swages'] = df_cps2010['swages']*adj_factor
-            df_cps2010['hhwages'] = df_cps2010['hhwages']*adj_factor
-            ae_m_hh = df_cps2010['hhwages'].mean()
-            df_cps2010['state'] = state
-            df_cps2010['year'] = year
-            df_cps2010['hhwages_ae'] = df_cps2010['hhwages'] / ae_m_hh
+            df_cps['hhwages'] = df_cps['pwages'] + df_cps['swages']
+            df_cps['pwages'] = df_cps['pwages']*adj_factor
+            df_cps['swages'] = df_cps['swages']*adj_factor
+            df_cps['hhwages'] = df_cps['hhwages']*adj_factor
+            ae_m_hh = df_cps['hhwages'].mean()
+            df_cps['state'] = state
+            df_cps['year'] = year
+            df_cps['hhwages_ae'] = df_cps['hhwages'] / ae_m_hh
             if (make_hist == True):
-                df_cps2010['hhwages_ae'].hist(bins=100)
+                df_cps['hhwages_ae'].hist(bins=100)
                 plt.axvline(x = 1, color = 'k')
                 #plt.xlim(0, 5)
                 plt.xlim(0, 11)
-            df_cps2010_filtered = df_cps2010[ (df_cps2010['hhwages_ae'] > AE_cut - 0.2) & (df_cps2010['hhwages_ae'] < AE_cut + 0.2)  ] 
-            print(f"{len(df_cps2010_filtered)} observations in state {state} in year {year} after filtering for AE={AE_cut}")
-            mm = df_cps2010_filtered['mstat'].value_counts()
+            df_cps_filtered = df_cps[ (df_cps['hhwages_ae'] > AE_cut - 0.2) & (df_cps['hhwages_ae'] < AE_cut + 0.2)  ] 
+            print(f"{len(df_cps_filtered)} observations in state {state} in year {year} after filtering for AE={AE_cut}")
+            mm = df_cps_filtered['mstat'].value_counts()
             if 1 in mm.index:
                 print(f" sinlges = {mm.loc[1]}")
             else:
@@ -203,13 +203,13 @@ def make_taxsim_inputs_v3(AE=1.0, AE_cut=1.0):
                 print(f" married = {mm.loc[2]}")
             else:
                 print(" married = 0")
-            df_cps2010_filtered = df_cps2010_filtered.reset_index(drop=True).reset_index(names="taxsimid")
-            df_cps2010_filtered['taxsimid'] = df_cps2010_filtered['taxsimid'] + 1
-            df_cps2010_filtered['pwages'] = df_cps2010_filtered['pwages']/df_cps2010_filtered['hhwages']*ae_m_hh*AE
-            df_cps2010_filtered['swages'] = df_cps2010_filtered['swages']/df_cps2010_filtered['hhwages']*ae_m_hh*AE
-            df_cps2010_filtered['hhwages'] = df_cps2010_filtered['pwages'] + df_cps2010_filtered['swages']
-            df_cps2010_filtered = df_cps2010_filtered.drop(columns=["hhwages","hhwages_ae","serial","statefip"])
-            df_cps2010_filtered.to_csv(f"TAXSIM_input_output_v4/taxsim_input_state_{state}_year_{year}_ae_{AE:3.1f}.csv", index=False)
+            df_cps_filtered = df_cps_filtered.reset_index(drop=True).reset_index(names="taxsimid")
+            df_cps_filtered['taxsimid'] = df_cps_filtered['taxsimid'] + 1
+            df_cps_filtered['pwages'] = df_cps_filtered['pwages']/df_cps_filtered['hhwages']*ae_m_hh*AE
+            df_cps_filtered['swages'] = df_cps_filtered['swages']/df_cps_filtered['hhwages']*ae_m_hh*AE
+            df_cps_filtered['hhwages'] = df_cps_filtered['pwages'] + df_cps_filtered['swages']
+            df_cps_filtered = df_cps_filtered.drop(columns=["hhwages","hhwages_ae","serial","statefip"])
+            df_cps_filtered.to_csv(f"TAXSIM_input_output_{cpsyear}/taxsim_input_state_{state}_year_{year}_ae_{AE:3.1f}.csv", index=False)
 
 #%%
 
@@ -404,7 +404,7 @@ if __name__ == "__main__":
     elif arg1 == "step_2":
         for (AE, AE_cut) in [(0.5,0.5), (1.0,1.0), (2.0,2.0), (3.0,3.0), (5.0,5.0), (10.0,5.0)]:
             print(f"AE = {AE}, AE_cut = {AE_cut}")
-            make_taxsim_inputs_v3(AE=AE, AE_cut=AE_cut)
+            make_taxsim_inputs_v3(AE=AE, AE_cut=AE_cut, cpsyear=2005)
     elif arg1 == "step_3":
         process_output_v3()
     else:
