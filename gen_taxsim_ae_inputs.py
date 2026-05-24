@@ -152,7 +152,7 @@ def process_cps_dataset():
 def make_taxsim_inputs_v3(AE=1.0, AE_cut=1.0, cpsyear=2010):
     df_ebs = pd.read_csv("earnings_by_state/earnings_by_state.csv")
     df_awi = pd.read_csv("awi.csv")
-    df_cps = pd.read_csv(f"CPS{year}.csv")
+    df_cps = pd.read_csv(f"CPS{cpsyear}.csv")
     df_cps['hhwages'] = df_cps['pwages'] + df_cps['swages']
     m_hh_cps = df_cps['hhwages'].mean()
     m_pe_cps = df_cps['pwages'].mean()
@@ -170,6 +170,7 @@ def make_taxsim_inputs_v3(AE=1.0, AE_cut=1.0, cpsyear=2010):
     # years = list(range(2000, 2001))
     make_hist = False
     for state in state_codes:
+        print("State {state}")
         ae_bea_cpsyear_state = df_ebs[ (df_ebs['IRS'] == state) & (df_ebs['Year'] == cpsyear ) ]['per capita income'].iloc[0]
         for year in years:
             print(year)
@@ -390,8 +391,8 @@ if __name__ == "__main__":
     print("Program started")
     print("Script name:", sys.argv[0])
     print("Arguments:", sys.argv[1:])
-    #arg1 = sys.argv[1]
-    arg1 = "step_1"
+    arg1 = sys.argv[1]
+    #arg1 = "step_1"
     print("Argument 1 = ", arg1)
     #make_input_ae_by_state()
     #collect_output()

@@ -19,5 +19,5 @@ module list
 #./run_all.sh > ProgramOutput.txt
 #./run_all_v1.sh > ProgramOutput.txt
 #./run_all_v2.sh > ProgramOutput.txt
-./run_all_v3.sh > ProgramOutput.txt
+./run_all_v4.sh > ProgramOutput.txt
 

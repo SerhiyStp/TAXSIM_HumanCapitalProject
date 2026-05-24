@@ -3,7 +3,9 @@ TAXSIM_input_output_v1/
 TAXSIM_input_output_v2/
 TAXSIM_input_output_v3/
 TAXSIM_input_output_v4/
+TAXSIM_input_output_2005/
 CPS/
 *.txt
 *.csv
 *.log
+slurm*
