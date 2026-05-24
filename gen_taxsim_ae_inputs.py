@@ -363,11 +363,17 @@ def process_output_v3():
                 df['gross_income'] = df['swages'] + df['pwages'] + 0.5*df['fica']
                 df['net_income'] = df['gross_income'] - df['fiitax'] - df['siitax'] - df['fica']
                 df['total_tax'] = df['fiitax'] + df['siitax'] + df['fica']
+                df['state_tax_rate'] = df['siitax']/df['gross_income']
+                df['fed_tax_rate'] = df['fiitax']/df['gross_income']
+                df['fica_rate'] = df['fica']/df['gross_income']
                 df['total_tax_rate'] = df['total_tax']/df['gross_income']
                 tr = df['total_tax_rate'].mean()
+                sr = df['state_tax_rate'].mean()
+                fr = df['fed_tax_rate'].mean()
+                ficar = df['fica_rate'].mean()
                 fmr = df['frate'].mean() 
                 smr = df['srate'].mean()
-                results.append({'year': year, 'state irs': state, 'ae': ae, 'tax rate': tr, 'fed mrate': fmr, 'state mrate': smr})
+                results.append({'year': year, 'state irs': state, 'ae': ae, 'total tax rate': tr, 'state tax rate': sr, 'fed tax rate': fr, 'fica rate': ficar, 'fed mrate': fmr, 'state mrate': smr})
 
     df_res = pd.DataFrame(results, columns=['year','state irs','ae','tax rate', 'fed mrate', 'state mrate'])
     df_res['state name'] = df_res['state irs'].map(irs_to_statename)
