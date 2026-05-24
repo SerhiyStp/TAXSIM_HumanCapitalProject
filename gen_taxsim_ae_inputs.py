@@ -37,7 +37,7 @@ def save_cps_parquet():
     df.to_parquet("CPS/CPS_TAX_DATA_w0.parquet")
     return 0
 
-def process_cps_dataset_alt():
+def process_cps_dataset_alt(year=2010):
 
     with open('fips_to_irs.pickle', 'rb') as f:
         fips_to_irs = pickle.load(f)
@@ -49,7 +49,7 @@ def process_cps_dataset_alt():
     #df.to_parquet("CPS/CPS_TAX_DATA_w0_alt.parquet")
 
     df = pd.read_parquet("CPS/CPS_TAX_DATA_w0_alt.parquet")
-    df = df.loc[ df['year'] == 2010 ]
+    df = df.loc[ df['year'] == year ]
     df = df.loc[ (df['age'] > 19) & (df['age'] < 65) ]
     df['mstat'] = np.where(df['marst'] < 3, 2, 1)
     df['state'] = df['statefip'].map(fips_to_irs).map(irs_to_statename)
@@ -70,30 +70,30 @@ def process_cps_dataset_alt():
             'relate_head': 'relate'}
         )
 
-    df2010 = pd.concat([df_singles, df_mar], ignore_index=True)
-    #df2010 = df_mar
-    print(df2010.groupby(['state']).size().sort_values())
+    df_year = pd.concat([df_singles, df_mar], ignore_index=True)
+    #df_year = df_mar
+    print(df_year.groupby(['state']).size().sort_values())
 
-    df2010['page'] = df2010['age'].fillna(0)
-    df2010['sage'] = df2010['age_spouse'].fillna(0)
-    df2010['depx'] = df2010['nchild'].fillna(0)
-    df2010['age1'] = df2010['yngch'].fillna(0)
-    #df2010.loc[df2010['yngch'] == 'niu', 'age1'] = 0
-    df2010['pwages'] = df2010['incwage'].fillna(0)
-    df2010['swages'] = df2010['incwage_spouse'].fillna(0)
-    df2010["age1"] = df2010["age1"].replace(99, 0)
-    df2010["age2"] = np.where(df2010["depx"] == 2, df2010["eldch"], 0)
-    df2010["age3"] = np.where(df2010["depx"] == 3, df2010["eldch"], 0)
-    df2010["intrec"] = df2010["incint"].fillna(0)
-    df2010["dividends"] = df2010["incdrt"].fillna(0)
-    df2010["stcg"] = df2010["capgain"] - df2010["caploss"]
-    df2010["stcg"] = df2010["stcg"].fillna(0)
-    df2010.loc[ (df2010["age3"] <= 19) & (df2010["age3"] > 0) & (df2010["age2"] == 0), "age2" ] = df2010["age3"]
-    df2010.loc[ (df2010["age1"] > 0) & (df2010["age3"] > 0) & (df2010["age2"] == 0), "age2" ] = (df2010["age1"] + df2010["age3"])//2
+    df_year['page'] = df_year['age'].fillna(0)
+    df_year['sage'] = df_year['age_spouse'].fillna(0)
+    df_year['depx'] = df_year['nchild'].fillna(0)
+    df_year['age1'] = df_year['yngch'].fillna(0)
+    #df_year.loc[df_year['yngch'] == 'niu', 'age1'] = 0
+    df_year['pwages'] = df_year['incwage'].fillna(0)
+    df_year['swages'] = df_year['incwage_spouse'].fillna(0)
+    df_year["age1"] = df_year["age1"].replace(99, 0)
+    df_year["age2"] = np.where(df_year["depx"] == 2, df_year["eldch"], 0)
+    df_year["age3"] = np.where(df_year["depx"] == 3, df_year["eldch"], 0)
+    df_year["intrec"] = df_year["incint"].fillna(0)
+    df_year["dividends"] = df_year["incdrt"].fillna(0)
+    df_year["stcg"] = df_year["capgain"] - df_year["caploss"]
+    df_year["stcg"] = df_year["stcg"].fillna(0)
+    df_year.loc[ (df_year["age3"] <= 19) & (df_year["age3"] > 0) & (df_year["age2"] == 0), "age2" ] = df_year["age3"]
+    df_year.loc[ (df_year["age1"] > 0) & (df_year["age3"] > 0) & (df_year["age2"] == 0), "age2" ] = (df_year["age1"] + df_year["age3"])//2
 
-    #df2010.to_parquet("CPS2010.parquet")
-    df2010 = df2010[['statefip','mstat','serial','page','sage','pwages','swages','depx','age1','age2','age3','intrec','dividends','stcg']]
-    df2010.to_csv("CPS2010.csv", index=False)
+    #df_year.to_parquet("CPS2010.parquet")
+    df_year = df_year[['statefip','mstat','serial','page','sage','pwages','swages','depx','age1','age2','age3','intrec','dividends','stcg']]
+    df_year.to_csv(f"CPS{year}.csv", index=False)
 
     return 0
 
@@ -375,7 +375,7 @@ def process_output_v3():
                 smr = df['srate'].mean()
                 results.append({'year': year, 'state irs': state, 'ae': ae, 'total tax rate': tr, 'state tax rate': sr, 'fed tax rate': fr, 'fica rate': ficar, 'fed mrate': fmr, 'state mrate': smr})
 
-    df_res = pd.DataFrame(results, columns=['year','state irs','ae','tax rate', 'fed mrate', 'state mrate'])
+    df_res = pd.DataFrame(results, columns=['year','state irs','ae','total tax rate', 'state tax rate', 'fed tax rate', 'fica rate', 'fed mrate', 'state mrate'])
     df_res['state name'] = df_res['state irs'].map(irs_to_statename)
     df_res['state fips'] = df_res['state irs'].map(irs_to_fips)
     df_res.to_csv('tax_rates_ss_ae_normalized.csv', index=False)
@@ -390,7 +390,8 @@ if __name__ == "__main__":
     print("Program started")
     print("Script name:", sys.argv[0])
     print("Arguments:", sys.argv[1:])
-    arg1 = sys.argv[1]
+    #arg1 = sys.argv[1]
+    arg1 = "step_1"
     print("Argument 1 = ", arg1)
     #make_input_ae_by_state()
     #collect_output()
@@ -399,6 +400,8 @@ if __name__ == "__main__":
     #make_taxsim_inputs_v2()
 
     if arg1 == "step_1":
+        process_cps_dataset_alt(2005)
+    elif arg1 == "step_2":
         for (AE, AE_cut) in [(0.5,0.5), (1.0,1.0), (2.0,2.0), (3.0,3.0), (5.0,5.0), (10.0,5.0)]:
             print(f"AE = {AE}, AE_cut = {AE_cut}")
             make_taxsim_inputs_v3(AE=AE, AE_cut=AE_cut)
