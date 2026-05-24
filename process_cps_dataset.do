@@ -3,7 +3,9 @@ set more off
 clear
 cd "CPS"
 use CPS_TAX_Data_w0
-keep if year == 2010
+local year = 2005
+keep if year == `year'
+*keep if year == 2010
 *keep if age > 19
 
 gen state = statefip
@@ -125,4 +127,6 @@ keep taxsimid year state mstat page sage depx dep13 dep17 dep18 pwages swages
 *export delimited using taxsim_input, replace nolabel
 
 *pause PP5
-save CPS_IPUMS_2010_base, replace
+*save CPS_IPUMS_2010_base, replace
+save CPS_IPUMS_`year'_base, replace
+
