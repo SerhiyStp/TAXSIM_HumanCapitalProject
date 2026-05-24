@@ -1,0 +1,9 @@
+TAXSIM_input_output/
+TAXSIM_input_output_v1/
+TAXSIM_input_output_v2/
+TAXSIM_input_output_v3/
+TAXSIM_input_output_v4/
+CPS/
+*.txt
+*.csv
+*.log
